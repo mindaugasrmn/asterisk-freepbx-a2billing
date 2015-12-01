@@ -11,6 +11,9 @@ ENV ASTERISKUSER asterisk
 ENV ASTERISK_DB_PW Password
 ENV ASTERISKVER 13.1
 ENV FREEPBXVER 12.0.43
+ENV A2BILLING_DB mya2billing
+ENV A2BILLING_USER a2billinguser
+ENV A2BILLING_DB_PW a2billing
 
 EXPOSE 80
 
@@ -206,4 +209,43 @@ COPY conf/cdr/cdr_adaptive_odbc.conf /etc/asterisk/cdr_adaptive_odbc.conf
 RUN chown asterisk:asterisk /etc/asterisk/cdr_adaptive_odbc.conf && \
     chmod 775 /etc/asterisk/cdr_adaptive_odbc.conf
 
+# Download and install A2Billing
+WORKDIR /usr/local/
+RUN curl -sf -o master.tar.gz https://github.com/Star2Billing/a2billing/archive/master.tar.gz && \
+    tar xfz master.tar.gz && \
+    rm master.tar.gz && \
+    mv a2billing-master a2billing && \
+    cd a2billing && \
+    ln -s /usr/local/a2billing/a2billing.conf /etc/a2billing.conf && \
+    chmod 777 /etc/asterisk && \
+    touch /etc/asterisk/additional_a2billing_iax.conf && \
+    touch /etc/asterisk/additional_a2billing_sip.conf && \
+    echo \#include additional_a2billing_sip.conf >> /etc/asterisk/sip.conf && \
+    echo \#include additional_a2billing_iax.conf >> /etc/asterisk/iax.conf && \
+    chown -Rf $ASTERISKUSER /etc/asterisk/additional_a2billing_iax.conf && \
+    chown -Rf $ASTERISKUSER /etc/asterisk/additional_a2billing_sip.conf && \
+    cd /usr/local/src/a2billing/AGI && \
+    ln -s /usr/local/a2billing/AGI/a2billing.php /usr/share/asterisk/agi-bin/a2billing.php && \
+    ln -s /usr/local/a2billing/AGI/lib /usr/share/asterisk/agi-bin/lib && \
+    chmod +x /usr/share/asterisk/agi-bin/a2billing.php && \
+    chmod +x /usr/share/asterisk/agi-bin/a2billing_monitoring.php && \
+    mkdir /var/www/a2billing && \
+    chown $ASTERISKUSER:www-data /var/www/a2billing && \
+    mkdir -p /var/lib/a2billing/script && \
+    mkdir -p /var/run/a2billing && \
+    ln -s /usr/local/a2billing/admin /var/www/a2billing/admin && \
+    ln -s /usr/local/a2billing/agent /var/www/a2billing/agent && \
+    ln -s /usr/local/a2billing/customer /var/www/a2billing/customer && \
+    ln -s /usr/local/a2billing/common /var/www/a2billing/common && \
+    chmod 755 /usr/local/a2billing/admin/templates_c && \
+    chmod 755 /usr/local/a2billing/customer/templates_c && \
+    chmod 755 /usr/local/a2billing/agent/templates_c && \
+    chown -Rf $ASTERISKUSER:www-data /usr/local/a2billing/admin/templates_c && \
+    chown -Rf $ASTERISKUSER:www-data /usr/local/a2billing/customer/templates_c && \
+    chown -Rf $ASTERISKUSER:www-data /usr/local/a2billing/agent/templates_c
+
 WORKDIR /
+
+
+
+

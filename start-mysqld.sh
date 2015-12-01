@@ -17,4 +17,7 @@ if [ "$newdb" = true ] ; then
     mysql -u root -e "GRANT ALL PRIVILEGES ON asterisk.* TO $ASTERISKUSER@localhost IDENTIFIED BY '$ASTERISK_DB_PW';"
     mysql -u root -e "GRANT ALL PRIVILEGES ON asteriskcdrdb.* TO $ASTERISKUSER@localhost IDENTIFIED BY '$ASTERISK_DB_PW';"
     mysql -u root -e "flush privileges;"
+    mysqladmin -u root create $A2BILLING_DB
+    mysql -u root -e "GRANT ALL PRIVILEGES ON $A2BILLING_DB.* TO $A2BILLING_USER@localhost IDENTIFIED BY '$A2BILLING_DB_PW';"
+    mysql -u root -e "flush privileges;"
 fi
